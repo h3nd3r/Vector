@@ -3,9 +3,9 @@ function Vector() {
 	this.x = 0;
 	this.y = 0;
 
-	this.angle
-	this.length
-	this.lengthSquared
+	this.angle = 0;
+	this.length = 0;
+	this.lengthSquared = 0;
 
 	this.Init = function(x, y) {
 		this.x = x;
@@ -13,7 +13,9 @@ function Vector() {
 	};
 
 	this.Clone = function() {
-		return new Vector().Init(this.x, this.y);
+		var clone = new Vector();
+		clone.Init(this.x, this.y);
+		return clone;
 	};
 
 	this.Zero = function() {
@@ -25,17 +27,18 @@ function Vector() {
 		return this.x == 0 && this.y == 0;	
 	};
 
-	this.isNormalized = function() {
+	this.IsNormalized = function() {
 		return this.length == 1.0;
 	};
 
 	this.Equals = function(vector) {
-		return this.x == vector.x && this.y == vector.y;
+		return ((this.x == vector.x) && (this.y == vector.y));
 	};
 	
 	this.Length = function(length) {
-		this.x = cos(_angle) * length;
-		this.y = sin(_angle) * length;
+		this.length = length;
+		this.x = Math.cos(this.angle) * length;
+		this.y = Math.sin(this.angle) * length;
 		if(Math.abs(this.x) < 0.00000001) this.x = 0;
 		if(Math.abs(this.y) < 0.00000001) this.y = 0;
 	};
@@ -94,9 +97,14 @@ function Vector() {
 	};
 
 	this.AngleBetween = function(vector) {
-		if(!this.isNormalized()) this = this.cloneVector().normalize();
-		if(!vector.isNormalized()) vector = vector.cloneVector().normalize();
-		return Math.acos(this.dotProduct(vector));
+		var clone = this.Clone();
+		if(!this.IsNormalized()) {
+			clone = this.Normalize();
+		}
+		if(!vector.IsNormalized()) {
+			vector = vector.Clone().Normalize();
+		}
+		return Math.acos(clone.DotProduct(vector));
 	};
 
 	this.Sign = function(vector) {
@@ -160,6 +168,8 @@ function Vector() {
 
 
 function Shape() {
+	this.height;
+	this.width;
 	this.vectors = new Array();
 	this.Add = function(vector) {
 		this.vectors.push(vector);
@@ -178,6 +188,14 @@ function Shape() {
 		}
 		return new Projection(min, max);
 	};
+	this.Update = function() {
+		this.vector[1].x = this.vectors[0].x + this.width;
+		this.vector[1].y = this.vectors[0].y;
+		this.vector[2].x = this.vectors[0].x + this.width;
+		this.vector[2].y = this.vectors[0].y + this.height;
+		this.vector[3].x = this.vectors[0].x;
+		this.vector[3].y = this.vectors[0].y + this.height;
+	}
 }
 
 function Rectangle() {
@@ -255,7 +273,42 @@ function assert_equal(expected, result){
 		console.log("fail");
 }
 
+function VectorTest() {
+	console.log("Vector Test");
+	var vector = new Vector();
+	assert_equal(0, vector.x);
+	assert_equal(0, vector.y);
+	assert_equal(0, vector.length);
+
+	assert_equal(false, vector.IsNormalized());
+	assert_equal(true, vector.IsZero());
+
+	assert_equal(5, vector.GetX(vector.SetX(5)));
+	assert_equal(4, vector.GetY(vector.SetY(4)));
+
+	vector.Zero();
+	assert_equal(true, vector.IsZero());
+	
+	vector.Init(3,10);
+	assert_equal(3, vector.GetX());
+	assert_equal(10, vector.GetY());
+
+	var clone = vector.Clone();
+	assert_equal(3, clone.GetX());
+	assert_equal(10, clone.GetY());
+	assert_equal(true, vector.Equals(clone));
+
+	vector.Subtract(clone);
+	assert_equal(true, vector.IsZero());
+
+	vector.Init(5,4);
+	var perpendicular = vector.Perpendicular();
+	assert_equal(0, vector.DotProduct(perpendicular));
+}
+
 function test() {
+
+	console.log("Projection Test");
 	var p1 = new Projection(0,5);
 	var p2 = new Projection(1,5);
 	var p3 = new Projection(6,7);
@@ -269,6 +322,7 @@ function test() {
 	assert_equal(true, p4.Overlap(p1));
 	assert_equal(false, p3.Overlap(p2));
 
+	console.log("SAT Test");
 	var square = new Shape();
 	square.Add(new Vector(0,0));
 	square.Add(new Vector(10,0));
@@ -283,9 +337,15 @@ function test() {
 	rectangle.Add(new Vector(0,10));
 	getAxes(rectangle);
 
-	console.log("SAT");
+	var triangle = new Shape();
+	triangle.Add(new Vector(20,20));
+	triangle.Add(new Vector(30,20));
+	triangle.Add(new Vector(25, 25));
 
 	assert_equal(true, SAT(square, rectangle));
+	assert_equal(false, SAT(triangle, square));
+	assert_equal(false, SAT(rectangle, square))
 }
 
+VectorTest();
 test();
