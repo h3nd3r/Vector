@@ -1,5 +1,4 @@
-
-// subtract, perpendicular
+// yay!
 function Vector() {
 	this.x = 0;
 	this.y = 0;
@@ -59,23 +58,23 @@ function Vector() {
 		return Math.atan2(this.y, this.x);
 	};
 
-	this.Normalize() {
+	this.Normalize = function() {
 		if(length == 0) {
 			this.x = 1;
 			return this;
-		{
+		}
 
 		this.x /= this.length;
 		this.y /= this.length;
 		return this;
 	};
 
-	this.Normalcate(length) {
+	this.Normalcate = function(length) {
 		this.length = length;
 		return this;
 	};
 
-	this.Truncate = function (max) {
+	this.Truncate = function(max) {
 		this.length = Math.min(max, this.length);
 		return this;
 	};
@@ -94,21 +93,90 @@ function Vector() {
 		return this.x*vector.y -this.y*vector.x;
 	};
 
-	
-}
+	this.AngleBetween = function(vector) {
+		if(!this.isNormalized()) this = this.cloneVector().normalize();
+		if(!vector.isNormalized()) vector = vector.cloneVector().normalize();
+		return Math.acos(this.dotProduct(vector));
+	};
 
-function Vertex(x, y) {
-	this.x = x;
-	this.y = y;
-	this.Subtract = function(a) {
-		return new Vertex(this.x - a.x, this.y - a.y);
+	this.Sign = function(vector) {
+		return (this.Perpendicular()).DotProduct(vector) < 0 ? -1 : 1;
+	};
+
+	this.Perpendicular = function() {
+		return new Vector(-this.y, this.x);
+	};
+
+	this.Distance = function(vector) {
+		return Math.sqrt(DistSQ(vector));
+	};
+
+	this.DistSQ = function(vector) {
+		var dx = vector.x - this.x;
+		var dy = vector.y - this.y;
+		return dx*dx + dy*dy;
+	};
+
+	this.Add = function(vector) {
+		this.x += vector.x;
+		this.y += vector.y;
+		return this;
+	};
+
+	this.Subtract = function(vector) {
+		this.x -= vector.x;
+		this.y -= vector.y;
+		return this;
+	};
+
+	this.Multiply = function(scalar) {
+		this.x *= scalar;
+		this.y *= scalar;
+		return this;
+	};
+
+	this.Divide = function(scalar) {
+		this.x /= scalar;
+		this.y /= scalar;
+		return this;
+	};
+
+	this.SetY = function(value) {
+		this.y = value;
+	};
+
+	this.GetY = function() {
+		return this.y;
+	};
+
+	this.SetX = function(value) {
+		this.x = value;
+	};
+
+	this.GetX = function(value) {
+		return this.x;
 	};
 }
 
+
 function Shape() {
-	this.vertices = new Array();
-	this.add = function(vertex) {
-		this.vertices.push(vertex);
+	this.vectors = new Array();
+	this.Add = function(vector) {
+		this.vectors.push(vector);
+	};
+	this.Project = function(axis) {
+		var min = axis.DotProduct(this.vectors[0]);
+		var max = min;
+		for(var i=1; i<this.vectors.length; i++)
+		{
+			var p = axis.DotProduct(this.vectors[i]);
+			if (p<min){
+				min = p;
+			} else if (p>max) {
+				ma = p;
+			}
+		}
+		return new Projection(min, max);
 	};
 }
 
@@ -128,7 +196,7 @@ function Axis() {
 function Projection(min, max) {
 	this.min = min;
 	this.max = max;
-	this.overlap = function(projection) {
+	this.Overlap = function(projection) {
 		return !(projection.max < this.min || this.max < projection.min);
 	};
 }
@@ -136,48 +204,48 @@ function Projection(min, max) {
 // Separating Axis Theorem for collision detection of two convex polygons
 function SAT (shape1, shape2) {
 	// get the axes to test;
-	var axis1 = getAxes(shape1);
-	var axis2 = getAxes(shape2);
-/*
-	for (int i=0; i<axes1.length; i++) {
-		Axis axis = axes1[i];
+	var axes1 = getAxes(shape1);
+	var axes2 = getAxes(shape2);
 
-		Projection p1 = shape1.project(axis);
-		Projection p2 = shape2.project(axis);
+	for (var i=0; i<axes1.length; i++) {
+		var axis = axes1[i];
 
-		if(!overlap(p1, p2)) {
+		var p1 = shape1.Project(axis);
+		var p2 = shape2.Project(axis);
+
+		if(!p1.Overlap(p2)) {
 			return false;
 		}
 	}
 
-	for (int i=0; i<axes2.length; i++) {
-		Axis axis = axes2[i];
+	for (var i=0; i<axes2.length; i++) {
+		var axis = axes2[i];
 
-		Projection p1 = project(shape1, axis);
-		Projection p2 = project(shape2, axis);
+		var p1 = shape1.Project(axis);
+		var p2 = shape2.Project(axis);
 
-		if(!p1.overlap(p2)) {
+		if(!p1.Overlap(p2)) {
 			return false;
 		}
 	}
-*/
+
 	// overlap
 	return true;
 }
 
 function getAxes(shape) {
-	var axes = new Array(shape.vertices.length);
+	var axes = new Array(shape.vectors.length);
 
 	// loop over all the vertices
-	for (var i=0; i < shape.vertices.length; i++)
+	for (var i=0; i < shape.vectors.length; i++)
 	{
 		
-		var p1 = shape.vertices[i];
-		var p2 = shape.vertices[i + 1 == shape.vertices.length ? 0 : i + 1];
+		var p1 = shape.vectors[i];
+		var p2 = shape.vectors[i + 1 == shape.vectors.length ? 0 : i + 1];
 
-		var edge = p1.subtract(p2);
+		var edge = p1.Subtract(p2);
 
-		var normal = edge.perpendicular();
+		var normal = edge.Perpendicular();
 
 		axes[i] = normal;
 	}
@@ -185,19 +253,11 @@ function getAxes(shape) {
 	return axes;
 }
 
-function project(shape, axis ) {
-/*	var min = axis.dot(shape.vertices[0]);
-	var max = min;
-	for (var i=1; i<shape.vertices.length; i++) {
-		var p = axis.dot(shape.vertices[i]);
-		if (p < min) {
-			min = p;
-		} else if (p > max ) {
-			max = pl
-		}
-	}*/
-	var proj = new Projection(min, max);
-	return proj;
+function assert_equal(expected, result){
+	if(expected == result)
+		console.log("pass");
+	else
+		console.log("fail");
 }
 
 function test() {
@@ -206,27 +266,31 @@ function test() {
 	var p3 = new Projection(6,7);
 	var p4 = new Projection(4,6);
 
-	document.writeln(p1.overlap(p2));
-	document.writeln(p2.overlap(p3));
-	document.writeln(p2.overlap(p1));
-	document.writeln(p3.overlap(p4));
-	document.writeln(p4.overlap(p3));
-	document.writeln(p4.overlap(p1));
-	document.writeln(p3.overlap(p2));
+	assert_equal(true, p1.Overlap(p2));
+	assert_equal(false, p2.Overlap(p3));
+	assert_equal(true, p2.Overlap(p1));
+	assert_equal(true, p3.Overlap(p4));
+	assert_equal(true, p4.Overlap(p3));
+	assert_equal(true, p4.Overlap(p1));
+	assert_equal(false, p3.Overlap(p2));
 
 	var square = new Shape();
-	square.add(new Vertex(0,0));
-	square.add(new Vertex(10,0));
-	square.add(new Vertex(10,10));
-	square.add(new Vertex(10,0));
+	square.Add(new Vector(0,0));
+	square.Add(new Vector(10,0));
+	square.Add(new Vector(10,10));
+	square.Add(new Vector(10,0));
 	getAxes(square);
 
 	var rectangle = new Shape();
-	rectangle.add(new Vertex(0,0));
-	rectangle.add(new Vertex(5,0));
-	rectangle.add(new Vertex(5,10));
-	rectangle.add(new Vertex(0,10));
+	rectangle.Add(new Vector(0,0));
+	rectangle.Add(new Vector(5,0));
+	rectangle.Add(new Vector(5,10));
+	rectangle.Add(new Vector(0,10));
 	getAxes(rectangle);
+
+	console.log("SAT");
+
+	assert_equal(true, SAT(square, rectangle));
 }
 
 test();
