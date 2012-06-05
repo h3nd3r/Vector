@@ -188,11 +188,6 @@ function Square() {
 
 }
 
-function Axis() {
-
-
-}
-
 function Projection(min, max) {
 	this.min = min;
 	this.max = max;
