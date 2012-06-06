@@ -7,6 +7,12 @@ function Vector() {
 	this.length = 0;
 	this.lengthSquared = 0;
 
+	this.Log = function() {
+		console.log("Vector: (" + this.x + ", " + this. y + ")" );
+		console.log("angle: " + this.angle);
+		console.log("length: " + this.length);
+	};
+
 	this.Init = function(x, y) {
 		this.x = x;
 		this.y = y;
@@ -34,7 +40,16 @@ function Vector() {
 	this.Equals = function(vector) {
 		return ((this.x == vector.x) && (this.y == vector.y));
 	};
-	
+
+	this.Length = function(vector) {
+console.log("ARG: " + vector.x + " , " + this.x);
+		var x = Math.abs(this.x - vector.x);
+		var y = Math.abs(this.y - vector.y);
+		x = x*x;
+		y = y*y;
+		this.length = Math.sqrt(x + y);
+	};
+	/*	
 	this.Length = function(length) {
 		this.length = length;
 		this.x = Math.cos(this.angle) * length;
@@ -42,7 +57,7 @@ function Vector() {
 		if(Math.abs(this.x) < 0.00000001) this.x = 0;
 		if(Math.abs(this.y) < 0.00000001) this.y = 0;
 	};
-
+	*/
 	this.GetLength = function() {
 		return Math.sqrt(lengthSquared);
 	};
@@ -62,7 +77,7 @@ function Vector() {
 	};
 
 	this.Normalize = function() {
-		if(length == 0) {
+		if(this.length == 0) {
 			this.x = 1;
 			return this;
 		}
@@ -170,10 +185,15 @@ function Vector() {
 function Shape() {
 	this.height;
 	this.width;
-	this.vectors = new Array();
+	this.vectors;
 	this.Add = function(vector) {
+		if(typeof this.vectors == "undefined")
+			this.vectors = new Array();
 		this.vectors.push(vector);
 	};
+
+
+/*
 	this.Project = function(axis) {
 		var min = axis.DotProduct(this.vectors[0]);
 		var max = min;
@@ -189,13 +209,20 @@ function Shape() {
 		return new Projection(min, max);
 	};
 	this.Update = function() {
-		this.vector[1].x = this.vectors[0].x + this.width;
-		this.vector[1].y = this.vectors[0].y;
-		this.vector[2].x = this.vectors[0].x + this.width;
-		this.vector[2].y = this.vectors[0].y + this.height;
-		this.vector[3].x = this.vectors[0].x;
-		this.vector[3].y = this.vectors[0].y + this.height;
+		this.vectors[1].x = this.vectors[0].x + this.width;
+		this.vectors[1].y = this.vectors[0].y;
+		this.vectors[2].x = this.vectors[0].x + this.width;
+		this.vectors[2].y = this.vectors[0].y + this.height;
+		this.vectors[3].x = this.vectors[0].x;
+		this.vectors[3].y = this.vectors[0].y + this.height;
 	}
+*/
+}
+
+function Circle() {
+	
+
+
 }
 
 function Rectangle() {
@@ -215,7 +242,7 @@ function Projection(min, max) {
 }
 
 // Separating Axis Theorem for collision detection of two convex polygons
-function SAT (shape1, shape2) {
+/*function SAT (shape1, shape2) {
 	// get the axes to test;
 	var axes1 = getAxes(shape1);
 	var axes2 = getAxes(shape2);
@@ -243,6 +270,87 @@ function SAT (shape1, shape2) {
 	}
 
 	// overlap
+	return true;
+}
+*/
+
+function FindNormalAxis(vectors, index) {
+	var vector1 = vectors[index];
+	var vector2 = (index >= vectors.length -1) ? vectors[0] : vectors[index + 1];
+console.log("Vector1 and Vector2 and Normal");
+vector1.Log();
+console.log();
+
+vector2.Log();
+console.log();
+	var normalAxis = new Vector();
+	normalAxis.Init(-(vector2.y - vector1.y), vector2.x - vector1.x);
+
+normalAxis.Log();
+console.log();
+
+	normalAxis.Normalize();
+
+normalAxis.Log();
+console.log();
+
+/*console.log("Normal Axis: " + normalAxis.x + "," + normalAxis.y);*/
+
+	return normalAxis;
+}
+
+function SAT(shape1, shape2) {
+	var test1;
+	var test2;
+	var testNum;
+	var min1;
+	var max1;
+	var min2;
+	var max2;
+	var axis;
+	var offset;
+	var vector1;
+	var vector2;
+	
+	// need to do something with the length
+	
+	// find the vertical offset
+	var vectorOffset = new Vector(shape1.x - shape2.x, shape1.y - shape2.y);
+
+	for(var i=0; i<shape1.vectors.length; i++) {
+		// project polygon1
+		axis = FindNormalAxis(shape1.vectors, i);
+		min1 = axis.DotProduct(shape1.vectors[0]);
+		max1 = min1;
+		for(var j=1; j<shape1.vectors.length; j++) {
+			testNum = axis.DotProduct(shape1.vectors[j]);
+			if (testNum < min1)
+				min1 = testNum;
+			if (testNum > max1)
+				max1 = testNum;
+		}
+
+		// project polygon2
+		min2 = axis.DotProduct(shape2.vectors[0]);
+		max2 = min2;
+		for(var j=1; j<shape2.vectors.length; j++) {
+			if (testNum < min2)
+				min2 = testNum;
+			if(testNum > max2)
+				max2 = testNum;
+		}
+
+		// apply the offset to each max/min
+		offset = axis.DotProduct(vectorOffset);
+		min1 += offset;
+		max1 += offset;
+
+		test1 = min1 - max2;
+		test2 = min2 - max1;
+		if (test1 > 0 || test2 > 0) {
+			return false;
+		}
+	}	
 	return true;
 }
 
@@ -324,23 +432,66 @@ function test() {
 
 	console.log("SAT Test");
 	var square = new Shape();
-	square.Add(new Vector(0,0));
-	square.Add(new Vector(10,0));
-	square.Add(new Vector(10,10));
-	square.Add(new Vector(10,0));
-	getAxes(square);
+
+	var vector0 = new Vector();
+	var vector1= new Vector();
+	var vector2 = new Vector();
+	var vector3 = new Vector();
+
+	vector0.Init(0,0);
+	vector1.Init(0,10);
+	vector2.Init(10,10);
+	vector3.Init(10,0);
+
+	square.Add(vector0);
+	square.Add(vector1);
+	square.Add(vector2);
+	square.Add(vector3);
+
+	square.vectors[0].Length(square.vectors[1]);
+	square.vectors[1].Length(square.vectors[2]);
+	square.vectors[2].Length(square.vectors[3]);
+	square.vectors[3].Length(square.vectors[0]);
+
+	square.vectors[0].Log();
+	square.vectors[1].Log();
+	square.vectors[2].Log();
+	square.vectors[3].Log();
 
 	var rectangle = new Shape();
-	rectangle.Add(new Vector(0,0));
-	rectangle.Add(new Vector(5,0));
-	rectangle.Add(new Vector(5,10));
-	rectangle.Add(new Vector(0,10));
-	getAxes(rectangle);
+
+	vector0.Init(0,0);
+	vector1.Init(5,0);
+	vector2.Init(5,10);
+	vector3.Init(0,10);
+	
+	rectangle.Add(vector0);
+	rectangle.Add(vector1);
+	rectangle.Add(vector2);
+	rectangle.Add(vector3);
+
+	rectangle.vectors[0].Length(rectangle.vectors[1]);
+	rectangle.vectors[1].Length(rectangle.vectors[2]);
+	rectangle.vectors[2].Length(rectangle.vectors[3]);
+	rectangle.vectors[3].Length(rectangle.vectors[0]);
 
 	var triangle = new Shape();
-	triangle.Add(new Vector(20,20));
-	triangle.Add(new Vector(30,20));
-	triangle.Add(new Vector(25, 25));
+
+	vector0.Init(20,20);
+	vector1.Init(30,20);
+	vector2.Init(25,25);
+
+	triangle.Add(vector0);
+	triangle.Add(vector1);
+	triangle.Add(vector2);
+
+	triangle.vectors[0].Length(triangle.vectors[1]);
+	triangle.vectors[1].Length(triangle.vectors[2]);
+	triangle.vectors[2].Length(triangle.vectors[0]);
+
+	triangle.vectors[0].Log();
+	triangle.vectors[1].Log();
+	triangle.vectors[2].Log();
 
 	assert_equal(true, SAT(square, rectangle));
 	assert_equal(false, SAT(triangle, square));
