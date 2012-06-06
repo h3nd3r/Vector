@@ -1,8 +1,60 @@
 // yay!
-function Vector() {
-	this.x = 0;
-	this.y = 0;
+exports.Vector = function(x,y) {
+	this.x = x;
+	this.y = y;
 
+	this.IsZero = function() {
+		return this.x ==0 && this.y == 0;
+	};
+
+	this.Magnitude = function() {
+		return Math.sqrt(this.x*this.x + this.y*this.y);
+	};
+
+	this.Normalize = function() {
+		var magnitude = this.Magnitude();
+		this.x = this.x/magnitude;
+		this.y = this.y/magnitude;
+	};
+
+	this.DotProduct = function(vector) {
+		return this.x*vector.x + this.y*vector.y;
+	};
+
+	this.DistanceTo = function(vector) {
+
+		return Math.sqrt(Math.pow(vector.x-this.x,2) + Math.pow(vector.y-this.y,2));
+	};
+
+	this.Negate = function() {
+		return new exports.Vector(-this.x, -this.y);
+	};
+
+	this.Add = function(vector) {
+		return new exports.Vector(this.x+vector.x, this.y+vector.y);
+	};
+
+	this.Subtract = function(vector) {
+		return new exports.Vector(this.x-vector.x, this.y-vector.y);
+	};
+
+	this.Scale = function(scale) {
+		return new exports.Vector(this.x*scale, this.y*scale);
+	};
+
+	this.Multiply = function(vector) {
+		return new exports.Vector(this.x*vector.x, this.y*vector.y);
+	};
+
+	this.Equals = function(vector) {
+		return this.x == vector.x && this.y == vector.y;
+	};
+
+	this.ToString = function() {
+		return this.x + "," + this.y;
+	};
+
+/*
 	this.angle = 0;
 	this.length = 0;
 	this.lengthSquared = 0;
@@ -19,7 +71,7 @@ function Vector() {
 	};
 
 	this.Clone = function() {
-		var clone = new Vector();
+		var clone = new exports.Vector();
 		clone.Init(this.x, this.y);
 		return clone;
 	};
@@ -42,14 +94,12 @@ function Vector() {
 	};
 
 	this.Length = function(vector) {
-console.log("ARG: " + vector.x + " , " + this.x);
 		var x = Math.abs(this.x - vector.x);
 		var y = Math.abs(this.y - vector.y);
 		x = x*x;
 		y = y*y;
 		this.length = Math.sqrt(x + y);
 	};
-	/*	
 	this.Length = function(length) {
 		this.length = length;
 		this.x = Math.cos(this.angle) * length;
@@ -57,7 +107,6 @@ console.log("ARG: " + vector.x + " , " + this.x);
 		if(Math.abs(this.x) < 0.00000001) this.x = 0;
 		if(Math.abs(this.y) < 0.00000001) this.y = 0;
 	};
-	*/
 	this.GetLength = function() {
 		return Math.sqrt(lengthSquared);
 	};
@@ -127,7 +176,7 @@ console.log("ARG: " + vector.x + " , " + this.x);
 	};
 
 	this.Perpendicular = function() {
-		return new Vector(-this.y, this.x);
+		return new exports.Vector(-this.y, this.x);
 	};
 
 	this.Distance = function(vector) {
@@ -179,11 +228,67 @@ console.log("ARG: " + vector.x + " , " + this.x);
 	this.GetX = function(value) {
 		return this.x;
 	};
+*/
 }
+exports.Polygon = function() {
+	this.points;
+	this.edges;
 
+	this.Add = function(vector) {
+		if(typeof this.points == "undefined") {
+			this.points = new Array();
+		}
+		this.points.push(vector);
+	}
 
-function Shape() {
-	this.height;
+	this.BuildEdges = function() {
+		var p1;
+		var p2;
+		if(typeof this.edges == "undefined") {
+			this.edges = new Array();
+		}
+
+		for(var i=0; i<this.points.length; i++) {
+			p1 = this.points[i];
+			if (i+1 >= this.points.length) {
+				p2 = this.points[0];
+			} else {
+				p2 = this.points[i + 1];
+			}
+			this.edges[i] = p2.Subtract(p1);
+		}
+	};
+
+	this.Center = function() {
+		var totalX;
+		var totalY;
+		for(var i=0; i<this.points.length; i++) {
+			totalX += this.points[i].x;
+			totalY += this.points[i].y;
+		}
+		return new exports.Vector(totalX/this.points.length, totalY/this.points.length);
+	};
+
+	this.Offset = function(vector) {
+		for(var i=0; i<this.points.length; i++) {
+			var p = this.points[i];
+			this.points[i] = new exports.Vector(p.x+vector.x, p.y+vector.y);
+		}
+	};
+
+	this.ToString = function() {
+		var result = "";
+		if(typeof this.points != "undefined") {
+			for (var i=0; i<this.points.length; i++) {
+				if (result != "") result += " ";
+				result += "{" + this.points[i].ToString() + "}";
+	
+			}
+		}
+		return result;
+	};
+
+/*	this.height;
 	this.width;
 	this.vectors;
 	this.Add = function(vector) {
@@ -192,8 +297,6 @@ function Shape() {
 		this.vectors.push(vector);
 	};
 
-
-/*
 	this.Project = function(axis) {
 		var min = axis.DotProduct(this.vectors[0]);
 		var max = min;
@@ -219,284 +322,87 @@ function Shape() {
 */
 }
 
-function Circle() {
-	
-
-
+exports.PolygonCollisionResult = function(willIntersect, intersect, minimumTranslationVector) {
+	this.willIntersect = willIntersect;
+	this.intersect = intersect;
+	this.minimumTranslationVector = minimumTranslationVector;
 }
 
-function Rectangle() {
+exports.Projection= function(min,max) {
+	this.min=min;
+	this.max=max;
 
-}
-
-function Square() {
-
-}
-
-function Projection(min, max) {
-	this.min = min;
-	this.max = max;
-	this.Overlap = function(projection) {
-		return !(projection.max < this.min || this.max < projection.min);
-	};
-}
-
-// Separating Axis Theorem for collision detection of two convex polygons
-/*function SAT (shape1, shape2) {
-	// get the axes to test;
-	var axes1 = getAxes(shape1);
-	var axes2 = getAxes(shape2);
-
-	for (var i=0; i<axes1.length; i++) {
-		var axis = axes1[i];
-
-		var p1 = shape1.Project(axis);
-		var p2 = shape2.Project(axis);
-
-		if(!p1.Overlap(p2)) {
-			return false;
-		}
+	this.ToString = function() {
+		return this.min + "," + this.max;
 	}
-
-	for (var i=0; i<axes2.length; i++) {
-		var axis = axes2[i];
-
-		var p1 = shape1.Project(axis);
-		var p2 = shape2.Project(axis);
-
-		if(!p1.Overlap(p2)) {
-			return false;
-		}
-	}
-
-	// overlap
-	return true;
-}
-*/
-
-function FindNormalAxis(vectors, index) {
-	var vector1 = vectors[index];
-	var vector2 = (index >= vectors.length -1) ? vectors[0] : vectors[index + 1];
-console.log("Vector1 and Vector2 and Normal");
-vector1.Log();
-console.log();
-
-vector2.Log();
-console.log();
-	var normalAxis = new Vector();
-	normalAxis.Init(-(vector2.y - vector1.y), vector2.x - vector1.x);
-
-normalAxis.Log();
-console.log();
-
-	normalAxis.Normalize();
-
-normalAxis.Log();
-console.log();
-
-/*console.log("Normal Axis: " + normalAxis.x + "," + normalAxis.y);*/
-
-	return normalAxis;
 }
 
-function SAT(shape1, shape2) {
-	var test1;
-	var test2;
-	var testNum;
-	var min1;
-	var max1;
-	var min2;
-	var max2;
-	var axis;
-	var offset;
-	var vector1;
-	var vector2;
-	
-	// need to do something with the length
-	
-	// find the vertical offset
-	var vectorOffset = new Vector(shape1.x - shape2.x, shape1.y - shape2.y);
+exports.ProjectPolygon = function(axis, polygon) {
+	var d = axis.DotProduct(polygon.points[0]);
+console.log("dot product: " + d);
+	var min = d;
+	var max = d;
 
-	for(var i=0; i<shape1.vectors.length; i++) {
-		// project polygon1
-		axis = FindNormalAxis(shape1.vectors, i);
-		min1 = axis.DotProduct(shape1.vectors[0]);
-		max1 = min1;
-		for(var j=1; j<shape1.vectors.length; j++) {
-			testNum = axis.DotProduct(shape1.vectors[j]);
-			if (testNum < min1)
-				min1 = testNum;
-			if (testNum > max1)
-				max1 = testNum;
+	for(var i=0; i<polygon.points.length; i++) {
+		d = polygon.points[i].DotProduct(axis);
+		if(d<min) {
+			min=d;
+		} else {
+			if(d>max) {
+				max=d;
+			}
 		}
-
-		// project polygon2
-		min2 = axis.DotProduct(shape2.vectors[0]);
-		max2 = min2;
-		for(var j=1; j<shape2.vectors.length; j++) {
-			if (testNum < min2)
-				min2 = testNum;
-			if(testNum > max2)
-				max2 = testNum;
-		}
-
-		// apply the offset to each max/min
-		offset = axis.DotProduct(vectorOffset);
-		min1 += offset;
-		max1 += offset;
-
-		test1 = min1 - max2;
-		test2 = min2 - max1;
-		if (test1 > 0 || test2 > 0) {
-			return false;
-		}
-	}	
-	return true;
-}
-
-function getAxes(shape) {
-	var axes = new Array(shape.vectors.length);
-
-	// loop over all the vertices
-	for (var i=0; i < shape.vectors.length; i++)
-	{
 		
-		var p1 = shape.vectors[i];
-		var p2 = shape.vectors[i + 1 == shape.vectors.length ? 0 : i + 1];
-
-		var edge = p1.Subtract(p2);
-
-		var normal = edge.Perpendicular();
-
-		axes[i] = normal;
 	}
-
-	return axes;
+console.log("min & max: " + min + "," + max); 
+	return new exports.Projection(min,max);
 }
 
-function assert_equal(expected, result){
-	if(expected == result)
-		console.log("pass");
-	else
-		console.log("fail");
+exports.IntervalDistance = function(projectionA, projectionB) {
+	if (projectionA.min < projectionB.min) {
+		return projectionB.min - projectionA.max;
+	} else {
+		return projectionA.min - projectionB.max;
+	}
 }
 
-function VectorTest() {
-	console.log("Vector Test");
-	var vector = new Vector();
-	assert_equal(0, vector.x);
-	assert_equal(0, vector.y);
-	assert_equal(0, vector.length);
+exports.PolygonCollision = function(polygonA, polygonB, velocity) {
+	var result = new exports.PolygonCollisionResult(true,true,new exports.Vector());
 
-	assert_equal(false, vector.IsNormalized());
-	assert_equal(true, vector.IsZero());
+	var edgeCountA = polygonA.edges.length;
+	var edgeCountB = polygonB.edges.length;
 
-	assert_equal(5, vector.GetX(vector.SetX(5)));
-	assert_equal(4, vector.GetY(vector.SetY(4)));
+	var minIntervalDistance = Infinity;
+	var translationAxis = new exports.Vector();
+	var edge;
 
-	vector.Zero();
-	assert_equal(true, vector.IsZero());
-	
-	vector.Init(3,10);
-	assert_equal(3, vector.GetX());
-	assert_equal(10, vector.GetY());
+	for(var edgeIndex=0; edgeIndex < edgeCountA+edgeCountB; edgeIndex++) {
+console.log("index count: " + edgeIndex);
+		if(edgeIndex < edgeCountA) {
+			edge = polygonA.edges[edgeIndex];
+		} else {
+			edge = polygonB.edges[edgeIndex - edgeCountA];
+		}
+		
+		// find if the polygons are currently intersecting
+		var axis = new exports.Vector(-edge.y, edge.x);
+		axis.Normalize();
 
-	var clone = vector.Clone();
-	assert_equal(3, clone.GetX());
-	assert_equal(10, clone.GetY());
-	assert_equal(true, vector.Equals(clone));
+console.log("axis: " + axis.ToString());
 
-	vector.Subtract(clone);
-	assert_equal(true, vector.IsZero());
+		// find the projection of the polygon on the current axis
+		var projectionA = exports.ProjectPolygon(axis, polygonA);
+		var projectionB = exports.ProjectPolygon(axis, polygonB);
 
-	vector.Init(5,4);
-	var perpendicular = vector.Perpendicular();
-	assert_equal(0, vector.DotProduct(perpendicular));
+
+		var interval = exports.IntervalDistance(projectionA, projectionB);
+console.log("Interval: " + interval);
+
+		if (exports.IntervalDistance(projectionA, projectionB) > 0) {
+			result.Intersect = false;
+		}
+	}
+	return result;
 }
 
-function test() {
 
-	console.log("Projection Test");
-	var p1 = new Projection(0,5);
-	var p2 = new Projection(1,5);
-	var p3 = new Projection(6,7);
-	var p4 = new Projection(4,6);
-
-	assert_equal(true, p1.Overlap(p2));
-	assert_equal(false, p2.Overlap(p3));
-	assert_equal(true, p2.Overlap(p1));
-	assert_equal(true, p3.Overlap(p4));
-	assert_equal(true, p4.Overlap(p3));
-	assert_equal(true, p4.Overlap(p1));
-	assert_equal(false, p3.Overlap(p2));
-
-	console.log("SAT Test");
-	var square = new Shape();
-
-	var vector0 = new Vector();
-	var vector1= new Vector();
-	var vector2 = new Vector();
-	var vector3 = new Vector();
-
-	vector0.Init(0,0);
-	vector1.Init(0,10);
-	vector2.Init(10,10);
-	vector3.Init(10,0);
-
-	square.Add(vector0);
-	square.Add(vector1);
-	square.Add(vector2);
-	square.Add(vector3);
-
-	square.vectors[0].Length(square.vectors[1]);
-	square.vectors[1].Length(square.vectors[2]);
-	square.vectors[2].Length(square.vectors[3]);
-	square.vectors[3].Length(square.vectors[0]);
-
-	square.vectors[0].Log();
-	square.vectors[1].Log();
-	square.vectors[2].Log();
-	square.vectors[3].Log();
-
-	var rectangle = new Shape();
-
-	vector0.Init(0,0);
-	vector1.Init(5,0);
-	vector2.Init(5,10);
-	vector3.Init(0,10);
-	
-	rectangle.Add(vector0);
-	rectangle.Add(vector1);
-	rectangle.Add(vector2);
-	rectangle.Add(vector3);
-
-	rectangle.vectors[0].Length(rectangle.vectors[1]);
-	rectangle.vectors[1].Length(rectangle.vectors[2]);
-	rectangle.vectors[2].Length(rectangle.vectors[3]);
-	rectangle.vectors[3].Length(rectangle.vectors[0]);
-
-	var triangle = new Shape();
-
-	vector0.Init(20,20);
-	vector1.Init(30,20);
-	vector2.Init(25,25);
-
-	triangle.Add(vector0);
-	triangle.Add(vector1);
-	triangle.Add(vector2);
-
-	triangle.vectors[0].Length(triangle.vectors[1]);
-	triangle.vectors[1].Length(triangle.vectors[2]);
-	triangle.vectors[2].Length(triangle.vectors[0]);
-
-	triangle.vectors[0].Log();
-	triangle.vectors[1].Log();
-	triangle.vectors[2].Log();
-
-	assert_equal(true, SAT(square, rectangle));
-	assert_equal(false, SAT(triangle, square));
-	assert_equal(false, SAT(rectangle, square))
-}
-
-VectorTest();
-test();
